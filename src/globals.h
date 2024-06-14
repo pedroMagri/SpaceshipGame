@@ -32,5 +32,6 @@ extern int k_foguetes;
 extern sem_t sem_foguetes;
 extern sem_t sem_recarga;
 extern sem_t sem_tela;
+extern sem_t sem_jogo;
 
 #endif // GLOBALS_H
