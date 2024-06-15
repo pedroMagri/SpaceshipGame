@@ -3,8 +3,9 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <ncurses.h>
-#include <time.h>
 #include <semaphore.h>
+#include <string.h>
+#include <time.h>
 #include "game.h"
 #include "globals.h"
 
@@ -28,28 +29,42 @@ void inicializa_jogo(int grau_dificuldade) {
     switch (grau_dificuldade) {
         case 1: // Fácil
             k_foguetes = 5;
-            velocidade_descida = 1; // Ajuste conforme necessário
-            num_naves = 5;
+            velocidade_descida = 0;
+            num_naves = 2;
             break;
         case 2: // Médio
             k_foguetes = 7;
-            velocidade_descida = 2; // Ajuste conforme necessário
-            num_naves = 10;
+            velocidade_descida = 1;
+            num_naves = 4;
             break;
         case 3: // Difícil
             k_foguetes = 6;
-            velocidade_descida = 3; // Ajuste conforme necessário
-            num_naves = 12;
+            velocidade_descida = 2;
+            num_naves = 6;
             break;
     }
     num_foguetes = 0;
     naves_abatidas = 0;
     naves_atingiram_solo = 0;
 
-    srand(time(NULL));
     for (int i = 0; i < num_naves; i++) {
-        naves[i].x = rand() % COLS/2;
-        naves[i].y = 0;
+        int x, y;
+        int posicao_valida = 0;
+
+        while (!posicao_valida) {
+            x = (rand() % (COLS / 3)) + (COLS / 3);
+            y = 0;
+            posicao_valida = 1;
+            for (int j = 0; j < i; j++) {
+                if (naves[j].ativa && naves[j].x == x && naves[j].y == y) {
+                    posicao_valida = 0;
+                    break;
+                }
+            }
+        }
+
+        naves[i].x = x;
+        naves[i].y = y;
         naves[i].ativa = 1;
     }
 
@@ -65,7 +80,7 @@ void inicializa_jogo(int grau_dificuldade) {
     sem_init(&sem_tela, 0, 1);
 }
 
-void* thread_principal(void* arg) {
+void* thread_principal() {
     while (!game_over) {
         sem_wait(&sem_tela);
         if (naves_abatidas >= num_naves / 2) {
@@ -87,12 +102,11 @@ void* thread_principal(void* arg) {
     mvprintw(row+2, col, "Naves atingiram o solo: %d", naves_atingiram_solo);
     refresh();
     sleep(5);
-    exit(1);
 
     return NULL;
 }
 
-void* thread_entrada_jogador(void* arg) {
+void* thread_entrada_jogador() {
     int ch;
     while (!game_over && (ch = getch()) != 'q') {
         sem_wait(&sem_foguetes);
@@ -119,12 +133,12 @@ void* thread_entrada_jogador(void* arg) {
     return NULL;
 }
 
-void* thread_movimentacao_naves(void* arg) {
+void* thread_movimentacao_naves() {
     while (!game_over) {
         sem_wait(&sem_tela);
         for (int i = 0; i < num_naves; i++) {
             if (naves[i].ativa) {
-                naves[i].y++;
+                naves[i].y = naves[i].y + velocidade_descida;
                 if (naves[i].y >= LINES) {
                     naves[i].ativa = 0;
                     naves_atingiram_solo++;
@@ -137,7 +151,7 @@ void* thread_movimentacao_naves(void* arg) {
     return NULL;
 }
 
-void* thread_controle_foguetes(void* arg) {
+void* thread_controle_foguetes() {
     while (!game_over) {
         sem_wait(&sem_tela);
         for (int i = 0; i < num_foguetes; i++) {
@@ -147,7 +161,7 @@ void* thread_controle_foguetes(void* arg) {
                     foguetes[i].ativa = 0;
                 } else {
                     for (int j = 0; j < num_naves; j++) {
-                        if (naves[j].ativa && foguetes[i].x == naves[j].x && foguetes[i].y == naves[j].y) {
+                        if (naves[j].ativa && ((foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+2) || (foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1))) {
                             naves[j].ativa = 0;
                             foguetes[i].ativa = 0;
                             naves_abatidas++;
@@ -163,7 +177,7 @@ void* thread_controle_foguetes(void* arg) {
     return NULL;
 }
 
-void* thread_recarga(void* arg) {
+void* thread_recarga() {
     while (!game_over) {
         sem_wait(&sem_recarga);
         usleep(5000000);
@@ -184,7 +198,9 @@ void atualiza_tela() {
     // Desenhar naves
     for (int i = 0; i < num_naves; i++) {
         if (naves[i].ativa) {
-            mvprintw(naves[i].y, naves[i].x, "N");
+            mvprintw(naves[i].y, naves[i].x, " / \\ ");
+            mvprintw(naves[i].y + 1, naves[i].x + 1, "<N>");
+            mvprintw(naves[i].y + 2, naves[i].x + 1, " V ");
         }
     }
     // Desenhar foguetes
