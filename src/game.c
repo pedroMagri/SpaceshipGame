@@ -29,7 +29,7 @@ void inicializa_jogo(int grau_dificuldade) {
     switch (grau_dificuldade) {
         case 1: // Fácil
             k_foguetes = 5;
-            velocidade_descida = 0;
+            velocidade_descida = 1;
             num_naves = 2;
             break;
         case 2: // Médio
@@ -52,7 +52,7 @@ void inicializa_jogo(int grau_dificuldade) {
         int posicao_valida = 0;
 
         while (!posicao_valida) {
-            x = (rand() % (COLS / 3)) + (COLS / 3);
+            x = (rand() % (COLS));
             y = 0;
             posicao_valida = 1;
             for (int j = 0; j < i; j++) {
@@ -108,7 +108,7 @@ void* thread_principal() {
 
 void* thread_entrada_jogador() {
     int ch;
-    while (!game_over && (ch = getch()) != 'q') {
+    while (!game_over && (ch = getch())) {
         sem_wait(&sem_foguetes);
         switch (ch) {
             case KEY_LEFT:
@@ -161,7 +161,12 @@ void* thread_controle_foguetes() {
                     foguetes[i].ativa = 0;
                 } else {
                     for (int j = 0; j < num_naves; j++) {
-                        if (naves[j].ativa && ((foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+2) || (foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1))) {
+                        if (naves[j].ativa && ((foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+2 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+5 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+4 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+3 && foguetes[i].y == naves[j].y+2)
+                                               )) {
                             naves[j].ativa = 0;
                             foguetes[i].ativa = 0;
                             naves_abatidas++;
@@ -198,9 +203,9 @@ void atualiza_tela() {
     // Desenhar naves
     for (int i = 0; i < num_naves; i++) {
         if (naves[i].ativa) {
-            mvprintw(naves[i].y, naves[i].x, " / \\ ");
-            mvprintw(naves[i].y + 1, naves[i].x + 1, "<N>");
-            mvprintw(naves[i].y + 2, naves[i].x + 1, " V ");
+            mvprintw(naves[i].y, naves[i].x, "  / \\  ");
+            mvprintw(naves[i].y + 1, naves[i].x + 1, "<<N>>");
+            mvprintw(naves[i].y + 2, naves[i].x + 3, "V");
         }
     }
     // Desenhar foguetes
