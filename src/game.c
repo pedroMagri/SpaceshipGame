@@ -27,17 +27,17 @@ sem_t sem_tela;
 
 void inicializa_jogo(int grau_dificuldade) {
     switch (grau_dificuldade) {
-        case 1: // Fácil
+        case 1:
             k_foguetes = 5;
             velocidade_descida = 1;
             num_naves = 2;
             break;
-        case 2: // Médio
+        case 2:
             k_foguetes = 7;
             velocidade_descida = 1;
             num_naves = 4;
             break;
-        case 3: // Difícil
+        case 3:
             k_foguetes = 6;
             velocidade_descida = 2;
             num_naves = 6;
@@ -52,7 +52,7 @@ void inicializa_jogo(int grau_dificuldade) {
         int posicao_valida = 0;
 
         while (!posicao_valida) {
-            x = (rand() % (COLS));
+            x = (rand() % (COLS - COLS/2));
             y = 0;
             posicao_valida = 1;
             for (int j = 0; j < i; j++) {
@@ -119,11 +119,53 @@ void* thread_entrada_jogador() {
                 if (lancador.x < COLS - 1)
                     lancador.x++;
                 break;
-            case ' ':
+            case 'a':
                 if (num_foguetes < k_foguetes) {
                     foguetes[num_foguetes].x = lancador.x;
                     foguetes[num_foguetes].y = lancador.y;
                     foguetes[num_foguetes].ativa = 1;
+                    foguetes[num_foguetes].direcao_x = -2;
+                    foguetes[num_foguetes].direcao_y = 0;
+                    num_foguetes++;
+                }
+                break;
+            case 's':
+                if (num_foguetes < k_foguetes) {
+                    foguetes[num_foguetes].x = lancador.x;
+                    foguetes[num_foguetes].y = lancador.y;
+                    foguetes[num_foguetes].ativa = 1;
+                    foguetes[num_foguetes].direcao_x = -1;
+                    foguetes[num_foguetes].direcao_y = -1;
+                    num_foguetes++;
+                }
+                break;
+            case 'd':
+                if (num_foguetes < k_foguetes) {
+                    foguetes[num_foguetes].x = lancador.x;
+                    foguetes[num_foguetes].y = lancador.y;
+                    foguetes[num_foguetes].ativa = 1;
+                    foguetes[num_foguetes].direcao_x = 0;
+                    foguetes[num_foguetes].direcao_y = -1;
+                    num_foguetes++;
+                }
+                break;
+            case 'f':
+                if (num_foguetes < k_foguetes) {
+                    foguetes[num_foguetes].x = lancador.x;
+                    foguetes[num_foguetes].y = lancador.y;
+                    foguetes[num_foguetes].ativa = 1;
+                    foguetes[num_foguetes].direcao_x = 1;
+                    foguetes[num_foguetes].direcao_y = -1;
+                    num_foguetes++;
+                }
+                break;
+            case 'g':
+                if (num_foguetes < k_foguetes) {
+                    foguetes[num_foguetes].x = lancador.x;
+                    foguetes[num_foguetes].y = lancador.y;
+                    foguetes[num_foguetes].ativa = 1;
+                    foguetes[num_foguetes].direcao_x = 2;
+                    foguetes[num_foguetes].direcao_y = 0;
                     num_foguetes++;
                 }
                 break;
@@ -156,15 +198,18 @@ void* thread_controle_foguetes() {
         sem_wait(&sem_tela);
         for (int i = 0; i < num_foguetes; i++) {
             if (foguetes[i].ativa) {
-                foguetes[i].y--;
-                if (foguetes[i].y < 0) {
+                foguetes[i].y += foguetes[i].direcao_y;
+                foguetes[i].x += foguetes[i].direcao_x;
+                if (foguetes[i].y < 0 || foguetes[i].x < 0 || foguetes[i].x >= COLS) {
                     foguetes[i].ativa = 0;
                 } else {
                     for (int j = 0; j < num_naves; j++) {
-                        if (naves[j].ativa && ((foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1) ||
+                        if (naves[j].ativa && ((foguetes[i].x == naves[j].x+3 && foguetes[i].y == naves[j].y) ||
+                                               (foguetes[i].x == naves[j].x+4 && foguetes[i].y == naves[j].y) ||
+                                               (foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+2 && foguetes[i].y == naves[j].y+1) ||
-                                               (foguetes[i].x == naves[j].x+5 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+4 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+5 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+3 && foguetes[i].y == naves[j].y+2)
                                                )) {
                             naves[j].ativa = 0;
@@ -200,7 +245,6 @@ void* thread_recarga() {
 void atualiza_tela() {
     sem_wait(&sem_tela);
     clear();
-    // Desenhar naves
     for (int i = 0; i < num_naves; i++) {
         if (naves[i].ativa) {
             mvprintw(naves[i].y, naves[i].x, "  / \\  ");
@@ -208,13 +252,27 @@ void atualiza_tela() {
             mvprintw(naves[i].y + 2, naves[i].x + 3, "V");
         }
     }
-    // Desenhar foguetes
     for (int i = 0; i < num_foguetes; i++) {
         if (foguetes[i].ativa) {
-            mvprintw(foguetes[i].y, foguetes[i].x, "|");
+            char* simbolo;
+            switch (foguetes[i].direcao_x) {
+                case -2:
+                case 2:
+                    simbolo = "-";
+                    break;
+                case -1:
+                    simbolo = "\\";
+                    break;
+                case 0:
+                    simbolo = "|";
+                    break;
+                case 1:
+                    simbolo = "/";
+                    break;
+            }
+            mvprintw(foguetes[i].y, foguetes[i].x, simbolo);
         }
     }
-    // Desenhar lançador
     mvprintw(lancador.y, lancador.x, "A");
     // Informações do jogo
     mvprintw(0, 0, "Foguetes: %d/%d", num_foguetes, k_foguetes);
@@ -251,6 +309,7 @@ int main() {
     noecho();
     curs_set(FALSE);
     keypad(stdscr, TRUE);
+    srand(time(NULL));
 
     int grau_dificuldade = seleciona_dificuldade();
     pthread_t t_principal, t_entrada, t_naves, t_foguetes, t_recarga;

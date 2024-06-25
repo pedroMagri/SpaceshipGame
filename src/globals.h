@@ -14,6 +14,8 @@ typedef struct {
 typedef struct {
     int x, y;
     int ativa;
+    int direcao_x;
+    int direcao_y;
 } Foguete;
 
 typedef struct {
