@@ -208,6 +208,7 @@ void* thread_controle_foguetes() {
                                                (foguetes[i].x == naves[j].x+4 && foguetes[i].y == naves[j].y) ||
                                                (foguetes[i].x == naves[j].x+1 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+2 && foguetes[i].y == naves[j].y+1) ||
+                                               (foguetes[i].x == naves[j].x+3 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+4 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+5 && foguetes[i].y == naves[j].y+1) ||
                                                (foguetes[i].x == naves[j].x+3 && foguetes[i].y == naves[j].y+2)
